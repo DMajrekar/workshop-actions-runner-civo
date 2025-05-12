@@ -1,0 +1,33 @@
+name: Demo Controller
+
+on:
+  workflow_dispatch:
+    inputs:
+      pattern:
+        description: 'Demo pattern to run'
+        required: true
+        type: choice
+        options:
+          - steady-increase
+          - sudden-burst
+          - mixed-workload
+          - scale-down-test
+
+jobs:
+  run-demo-pattern:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Generate tokens
+        id: generate_token
+        uses: tibdex/github-app-token@v1
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+        
+      - name: Run demo pattern
+        run: bash ./scripts/demo_patterns.sh ${{ github.event.inputs.pattern }} ${{ github.repository }}
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}

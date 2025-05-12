@@ -1,0 +1,29 @@
+name: Mixed Workload
+
+on:
+  workflow_dispatch:
+    inputs:
+      workflow_type:
+        description: 'Workload type'
+        required: true
+        type: choice
+        options:
+          - cpu-heavy
+          - memory-heavy
+          - io-heavy
+          - mixed
+      duration:
+        description: 'Duration in minutes (1-30)'
+        required: true
+        default: '10'
+
+jobs:
+  mixed-workload:
+    runs-on: [self-hosted, linux, x64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        
+      - name: Run workload
+        run: |
+          bash ./scripts/mixed_workload.sh ${{ github.event.inputs.workflow_type }} ${{ github.event.inputs.duration }}

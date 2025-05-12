@@ -1,0 +1,29 @@
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: github-runner
+spec:
+  replicas: 1
+  template:
+    spec:
+      repository: dmajrekar/workshop-actions-runner-civo
+      labels:
+        - self-hosted
+        - linux
+        - x64
+---
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: HorizontalRunnerAutoscaler
+metadata:
+  name: github-runner-autoscaler
+spec:
+  scaleTargetRef:
+    name: github-runner
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+  - type: TotalNumberOfQueuedAndInProgressWorkflowRuns
+    scaleUpThreshold: '2'
+    scaleDownThreshold: '1'
+    scaleUpFactor: '2'
+    scaleDownFactor: '0.5'

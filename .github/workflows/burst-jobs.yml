@@ -1,0 +1,47 @@
+name: Queue Burst Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      job_count:
+        description: 'Number of jobs to queue (1-50)'
+        required: true
+        default: '15'
+      duration:
+        description: 'Average job duration in minutes (1-10)'
+        required: true
+        default: '2'
+
+jobs:
+  queue-jobs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate tokens
+        id: generate_token
+        uses: tibdex/github-app-token@v1
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+          
+      - name: Queue jobs
+        run: |
+          echo "Scheduling ${{ github.event.inputs.job_count }} jobs..."
+          
+          for i in $(seq 1 ${{ github.event.inputs.job_count }}); do
+            # Create a random duration with ±30% variation
+            base=${{ github.event.inputs.duration }}
+            min=$(echo "$base * 0.7" | bc)
+            max=$(echo "$base * 1.3" | bc)
+            random=$(echo "scale=1; $min + ($max - $min) * $RANDOM / 32767" | bc)
+            
+            # Queue the actual job
+            gh workflow run process-single-job.yml \
+              -f job_id=$i \
+              -f duration=$random \
+              -r ${{ github.repository }}
+              
+            # Avoid hitting rate limits
+            sleep 0.5
+          done
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}

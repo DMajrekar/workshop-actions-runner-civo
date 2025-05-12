@@ -1,0 +1,32 @@
+name: CPU Load Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      duration:
+        description: 'Duration in minutes (1-30)'
+        required: true
+        default: '5'
+      concurrency:
+        description: 'Number of simultaneous jobs (1-10)'
+        required: true
+        default: '3'
+      cpu_load:
+        description: 'CPU load percentage (10-100)'
+        required: true
+        default: '80'
+
+jobs:
+  cpu-load-test:
+    runs-on: [self-hosted, linux, x64]
+    strategy:
+      fail-fast: false
+      matrix:
+        instance: ${{ fromJson(format('[{0}]', join(',',[for i in range(fromJSON(github.event.inputs.concurrency)): format('{{"id":"{0}"}}', i)]))) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Run CPU load
+        run: |
+          bash ./scripts/cpu_load.sh ${{ github.event.inputs.duration }} ${{ github.event.inputs.cpu_load }}
