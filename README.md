@@ -104,6 +104,40 @@ For runner authentication with GitHub, you'll need to create a Personal Access T
    - Configure GitHub authentication
    - Set up repository or organization runners
 
+### Setting Up Civo Node Autoscaler
+
+To enable automatic node scaling based on pending pods:
+
+1. Install the Civo Node Autoscaler
+   ```bash
+   kubectl apply -f https://raw.githubusercontent.com/civo/cluster-autoscaler/master/deploy/civo-cluster-autoscaler.yaml
+   ```
+
+2. Edit the deployment to configure your Civo API key:
+   ```bash
+   kubectl edit deployment -n kube-system cluster-autoscaler-civo
+   ```
+
+3. Add your Civo API key and cluster ID as environment variables:
+   ```yaml
+   env:
+     - name: CIVO_API_KEY
+       value: "your-civo-api-key"
+     - name: CIVO_CLUSTER_ID
+       value: "your-cluster-id"
+   ```
+
+4. Verify the autoscaler is running:
+   ```bash
+   kubectl get pods -n kube-system | grep cluster-autoscaler
+   ```
+
+With both resource requirements set on runners and the Civo node autoscaler installed, your setup will now:
+1. Create runner pods with specific resource requirements
+2. Keep pods in "Pending" state when resources are insufficient
+3. Trigger the node autoscaler to provision new nodes
+4. Scale your cluster automatically based on workflow demand
+
 ## Testing Your Runners
 
 ### Verify Runner Registration
@@ -175,6 +209,25 @@ Available patterns:
    kubectl edit runnerdeployment -n actions-runner-system github-runner
    ```
 
+   Add or modify the resources section to set CPU and memory requests/limits:
+   ```yaml
+   spec:
+     template:
+       spec:
+         resources:
+           limits:
+             cpu: "1000m"
+             memory: "2Gi"
+           requests:
+             cpu: "500m"
+             memory: "1Gi"
+   ```
+
+   Setting these resource requirements ensures:
+   - Pods will remain unscheduled until sufficient resources are available
+   - The Civo node autoscaler can trigger node creation before scheduling pods
+   - Better resource allocation across your cluster
+
 ## Cleaning Up
 
 When you're done with the workshop, clean up your resources:
@@ -202,7 +255,8 @@ If you encounter issues:
 
 3. Verify your GitHub Personal Access Token's scopes and expiration
 4. Ensure your Civo API key has sufficient permissions
-5. Refer to the [official ARC troubleshooting guide](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners-with-actions-runner-controller/troubleshooting-actions-runner-controller) for more detailed help
+5. Make sure the Civo node autoscaler is properly installed and configured for your cluster. Without it, pods may remain in `Pending` state even with proper resource requirements.
+6. Refer to the [official ARC troubleshooting guide](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners-with-actions-runner-controller/troubleshooting-actions-runner-controller) for more detailed help
 
 ## Why Civo K3s?
 
