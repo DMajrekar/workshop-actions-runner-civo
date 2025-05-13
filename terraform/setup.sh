@@ -48,9 +48,8 @@ if [ ! -f terraform.tfvars ]; then
     exit 1
 fi
 
-# Initialize Terraform
-echo "Initializing Terraform..."
-terraform init
+# Collect all required inputs at the beginning
+echo "Collecting all required inputs..."
 
 # Check if GitHub token already exists in tfvars file
 if grep -q "github_token" terraform.tfvars; then
@@ -91,6 +90,15 @@ else
     echo "GitHub token saved to terraform.tfvars"
 fi
 
+# Get GitHub repository information at the beginning
+echo
+read -p "Enter your GitHub username: " github_username
+read -p "Enter the repository name: " github_repo
+
+# Initialize Terraform
+echo "Initializing Terraform..."
+terraform init
+
 # Apply Terraform configuration with GitHub PAT
 echo
 echo "Creating Civo Kubernetes cluster with Actions Runner Controller and Cluster Autoscaler..."
@@ -111,8 +119,7 @@ kubectl cluster-info
 
 # Setup repository runner deployment
 echo
-read -p "Enter your GitHub username: " github_username
-read -p "Enter the repository name: " github_repo
+echo "Using GitHub repository: $github_username/$github_repo"
 
 cat > runner-deployment.yaml << EOF
 apiVersion: actions.summerwind.dev/v1alpha1

@@ -91,15 +91,21 @@ This workshop demonstrates how to set up, configure, and optimize GitHub Actions
    - Verify the runner appears in the list
 
 9. **Run single process job**
-   - Go to the Actions tab in your GitHub repository
-   - Run the process-single-job workflow
+   - Use the provided script to trigger a single job process:
    ```bash
-   # Trigger the workflow
    cd /projects/workshop
-   git add .
-   git commit -m "Test single process runner"
-   git push
+   chmod +x scripts/trigger_single_job.sh
+   ./scripts/trigger_single_job.sh <your-github-username> <your-repo-name>
+   
+   # Example:
+   # ./scripts/trigger_single_job.sh janedoe my-workshop-repo
    ```
+   
+   This script will trigger a job that runs for 5 minutes using your self-hosted runner.
+   - Alternatively, you can manually trigger the workflow from the GitHub UI:
+     - Go to the Actions tab in your GitHub repository
+     - Select the "Process Single Job" workflow
+     - Click "Run workflow"
    - Monitor your runner in the Kubernetes cluster:
    ```bash
    kubectl get pods -n actions-runner-system -w
