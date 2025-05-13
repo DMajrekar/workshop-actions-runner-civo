@@ -27,6 +27,14 @@ jobs:
           # Calculate seconds and remove decimal part for timeout
           SECONDS=$(echo "${{ github.event.inputs.duration }} * 60" | bc | cut -d. -f1)
           
-          # Run the job
+          # Run the job and handle timeout exit code (124)
           timeout "$SECONDS" \
-            bash -c 'while true; do echo "Working..." > /dev/null; dd if=/dev/zero of=/dev/null bs=1M count=10; sleep 0.1; done'
+            bash -c 'while true; do echo "Working..." > /dev/null; dd if=/dev/zero of=/dev/null bs=1M count=10; sleep 0.1; done' || code=$?
+          
+          # Check if timeout exited with code 124 (timeout reached) and consider it success
+          if [ "${code:-0}" -eq 124 ]; then
+            echo "Job successfully ran for the full duration of $SECONDS seconds and completed as expected."
+          else
+            echo "Job exited with unexpected code: ${code:-0}"
+            exit ${code:-1}
+          fi
