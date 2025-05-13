@@ -1,12 +1,12 @@
 #!/bin/bash
-# This script simplifies the process of setting up a Civo K8s cluster
+# This script simplifies the process of setting up a Civo Kubernetes cluster
 # and the Actions Runner Controller for workshop participants
 
 set -e
 
 # ASCII art banner
 echo "=================================================="
-echo "  GitHub Actions Runners on Civo K8s Workshop"
+echo "  GitHub Actions Runners on Civo Kubernetes Workshop"
 echo "=================================================="
 echo
 
