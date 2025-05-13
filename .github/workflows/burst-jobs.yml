@@ -17,6 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Using PAT authentication instead of GitHub App
+      
+      - name: Checkout repository
+        uses: actions/checkout@v3
           
       - name: Queue jobs
         run: |
