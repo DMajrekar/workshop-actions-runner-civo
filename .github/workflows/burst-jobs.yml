@@ -46,7 +46,9 @@ jobs:
             gh workflow run process-single-job.yml \
               -f job_id=$i \
               -f duration=$random \
-              -r ${{ github.repository }}
+              -r ${{ github.repository }} \
+              -R ${{ github.repository }} \
+              -b ${{ github.ref_name }}
               
             # Avoid hitting rate limits
             sleep 0.5

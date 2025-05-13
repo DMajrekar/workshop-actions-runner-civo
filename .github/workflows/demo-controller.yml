@@ -27,6 +27,6 @@ jobs:
       # Using PAT authentication instead of GitHub App
         
       - name: Run demo pattern
-        run: bash ./scripts/demo_patterns.sh ${{ github.event.inputs.pattern }} ${{ github.repository }}
+        run: bash ./scripts/demo_patterns.sh ${{ github.event.inputs.pattern }} ${{ github.repository }} ${{ github.ref_name }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
