@@ -22,5 +22,6 @@ jobs:
           echo "Running job ${{ github.event.inputs.job_id }} for ${{ github.event.inputs.duration }} minutes"
           
           # Simple way to consume some resources and wait
-          timeout $(echo "${{ github.event.inputs.duration }} * 60" | bc | cut -d. -f1) \
+          SECONDS_TO_RUN=$(( ${github.event.inputs.duration} * 60 ))
+          timeout $SECONDS_TO_RUN \
             bash -c 'while true; do echo "Working..." > /dev/null; dd if=/dev/zero of=/dev/null bs=1M count=10; sleep 0.1; done'
