@@ -166,6 +166,11 @@ echo
 echo "To verify that your runners are registered in GitHub:"
 echo "  Go to your GitHub repository > Settings > Actions > Runners"
 echo
+echo "To check cluster and pod resource utilization using metrics-server:"
+echo "  kubectl top nodes        # View node CPU and memory usage"
+echo "  kubectl top pods -A      # View all pod resource usage"
+echo "  kubectl top pods -n actions-runner-system  # View runner pod resource usage"
+echo
 echo "The Civo cluster autoscaler has been installed and configured. It will"
 echo "automatically scale your cluster nodes when needed based on pending pods."
 echo "To check the autoscaler status, run:"

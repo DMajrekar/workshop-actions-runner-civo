@@ -13,6 +13,16 @@ This workshop demonstrates how to set up, configure, and optimize GitHub Actions
 
 ## Technical Components
 
+### Kubernetes Metrics Server
+
+The [Kubernetes Metrics Server](https://github.com/kubernetes-sigs/metrics-server) collects resource metrics from Kubelets and exposes them through the Kubernetes API server for use by:
+
+- Horizontal Pod Autoscaler for scaling workloads
+- Vertical Pod Autoscaler for right-sizing container resources
+- kubectl top commands for easy resource monitoring
+
+The metrics-server is installed automatically via Terraform's Helm provider and configured specifically for the Civo environment.
+
 ### Actions Runner Controller (ARC)
 
 This workshop uses [Actions Runner Controller (ARC)](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners-with-actions-runner-controller/about-actions-runner-controller), GitHub's official Kubernetes-based controller for managing self-hosted runners. Key ARC features include:
@@ -116,6 +126,7 @@ For runner authentication with GitHub, you'll need to create a Personal Access T
 5. The setup will:
    - Create a Kubernetes cluster on Civo
    - Install cert-manager and Actions Runner Controller
+   - Install Kubernetes Metrics Server for resource monitoring
    - Configure GitHub authentication
    - Set up repository or organization runners
    - Install and configure the Civo Cluster Autoscaler
@@ -166,6 +177,27 @@ Available patterns:
 - **sudden-burst**: Creates many jobs at once to test rapid scaling
 - **mixed-workload**: Runs different types of jobs simultaneously
 - **scale-down**: Creates workloads and then lets them complete to show scale-down behavior
+
+### Using the Metrics Server
+
+Once the metrics-server is installed, you can use it to monitor resource usage:
+
+1. Check node CPU and memory usage:
+   ```bash
+   kubectl top nodes
+   ```
+
+2. Check pod resource consumption:
+   ```bash
+   kubectl top pods -A
+   ```
+
+3. Monitor runner pod resource usage:
+   ```bash
+   kubectl top pods -n actions-runner-system
+   ```
+
+These metrics are essential for understanding resource utilization and properly sizing your runners.
 
 ### Understanding Autoscaling
 
@@ -301,3 +333,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [ARC GitHub Repository](https://github.com/actions/actions-runner-controller) for the open source project
 - [Kubernetes Cluster Autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler) project
 - [Civo Cluster Autoscaler](https://github.com/civo/cluster-autoscaler) for Civo integration
+- [Kubernetes Metrics Server](https://github.com/kubernetes-sigs/metrics-server) for resource monitoring

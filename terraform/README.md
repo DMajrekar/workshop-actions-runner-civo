@@ -45,6 +45,7 @@ This directory contains the Terraform configuration for creating a Kubernetes cl
    - Ask for your GitHub App credentials
    - Create your Kubernetes cluster on Civo
    - Install cert-manager and Actions Runner Controller
+   - Install Kubernetes Metrics Server for resource monitoring
    - Configure GitHub authentication
    - Set up runners for your repository or organization
 
