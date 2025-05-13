@@ -93,7 +93,7 @@ fi
 
 # Apply Terraform configuration with GitHub PAT
 echo
-echo "Creating Civo Kubernetes cluster with Actions Runner Controller..."
+echo "Creating Civo Kubernetes cluster with Actions Runner Controller and Cluster Autoscaler..."
 echo "This will take a few minutes..."
 terraform apply -auto-approve \
   -var="github_token=$github_token"
@@ -166,5 +166,13 @@ echo
 echo "To verify that your runners are registered in GitHub:"
 echo "  Go to your GitHub repository > Settings > Actions > Runners"
 echo
+echo "The Civo cluster autoscaler has been installed and configured. It will"
+echo "automatically scale your cluster nodes when needed based on pending pods."
+echo "To check the autoscaler status, run:"
+echo "  kubectl get pods -n kube-system | grep cluster-autoscaler"
+echo "  kubectl logs -n kube-system deployment/cluster-autoscaler"
+echo
 echo "You can now use the GitHub workflows in this repository to test your runners."
+echo "When workflow demand increases, runners will scale up and the cluster"
+echo "autoscaler will provision additional nodes as needed."
 echo "======================================================================"

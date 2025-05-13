@@ -9,6 +9,7 @@ This workshop demonstrates how to set up, configure, and optimize GitHub Actions
 - **Cost Optimization**: Save 40-70% compared to GitHub-hosted runners with more control
 - **Multi-Project Support**: Configure runners for multiple repositories or organizations
 - **Real-world Testing**: Simulate various workflow patterns to demonstrate scaling
+- **Cluster Autoscaling**: Automatic scaling of Kubernetes nodes based on workload demand
 
 ## Technical Components
 
@@ -35,6 +36,12 @@ For more details on ARC concepts and components, refer to the [official document
 - Consistent, reproducible infrastructure
 - Easy cleanup to prevent lingering costs
 
+### Civo Cluster Autoscaler
+
+- Automatic scaling of Kubernetes nodes based on workload demand
+- Seamless integration with Civo's managed Kubernetes service
+- Integrated with Terraform for one-command deployment
+
 ## Repository Structure
 
 ```
@@ -53,6 +60,7 @@ For more details on ARC concepts and components, refer to the [official document
 - [Terraform](https://www.terraform.io/downloads.html) (v1.0.0+)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/)
 - [Helm](https://helm.sh/docs/intro/install/)
+- [Civo CLI](https://github.com/civo/cli) configured with your API key
 
 ## Workshop Guide
 
@@ -60,7 +68,14 @@ For more details on ARC concepts and components, refer to the [official document
 
 1. If you don't have a Civo account, sign up at [civo.com](https://www.civo.com)
 2. Get your API key from the [Civo dashboard](https://dashboard.civo.com/security)
-3. Make note of your API key for later use
+3. Configure the Civo CLI with your API key:
+   ```bash
+   civo apikey add default YOUR_API_KEY
+   ```
+
+Notes:
+- The Civo API key is used by the Terraform provider to create resources
+- Civo automatically creates a `civo-api-access` secret with necessary credentials for the cluster autoscaler
 
 ### Part 2: Creating a GitHub Personal Access Token (PAT)
 
@@ -84,10 +99,10 @@ For runner authentication with GitHub, you'll need to create a Personal Access T
    cd terraform
    ```
 
-2. Copy the example variables file and edit it with your Civo API key
+2. Copy the example variables file and edit it with your preferences
    ```bash
    cp terraform.tfvars.example terraform.tfvars
-   nano terraform.tfvars  # Edit with your Civo API key and preferences
+   nano terraform.tfvars  # Edit with your preferences
    ```
 
 3. Run the setup script to provision the infrastructure
@@ -103,40 +118,7 @@ For runner authentication with GitHub, you'll need to create a Personal Access T
    - Install cert-manager and Actions Runner Controller
    - Configure GitHub authentication
    - Set up repository or organization runners
-
-### Setting Up Civo Node Autoscaler
-
-To enable automatic node scaling based on pending pods:
-
-1. Install the Civo Node Autoscaler
-   ```bash
-   kubectl apply -f https://raw.githubusercontent.com/civo/cluster-autoscaler/master/deploy/civo-cluster-autoscaler.yaml
-   ```
-
-2. Edit the deployment to configure your Civo API key:
-   ```bash
-   kubectl edit deployment -n kube-system cluster-autoscaler-civo
-   ```
-
-3. Add your Civo API key and cluster ID as environment variables:
-   ```yaml
-   env:
-     - name: CIVO_API_KEY
-       value: "your-civo-api-key"
-     - name: CIVO_CLUSTER_ID
-       value: "your-cluster-id"
-   ```
-
-4. Verify the autoscaler is running:
-   ```bash
-   kubectl get pods -n kube-system | grep cluster-autoscaler
-   ```
-
-With both resource requirements set on runners and the Civo node autoscaler installed, your setup will now:
-1. Create runner pods with specific resource requirements
-2. Keep pods in "Pending" state when resources are insufficient
-3. Trigger the node autoscaler to provision new nodes
-4. Scale your cluster automatically based on workflow demand
+   - Install and configure the Civo Cluster Autoscaler
 
 ## Testing Your Runners
 
@@ -192,9 +174,20 @@ Available patterns:
    kubectl get pods -n actions-runner-system -w
    ```
 
-2. Observe autoscaling metrics:
+2. Observe runner autoscaling metrics:
    ```bash
    kubectl describe horizontalrunnerautoscaler -n actions-runner-system
+   ```
+
+3. Monitor node autoscaler activity:
+   ```bash
+   kubectl get pods -n kube-system | grep cluster-autoscaler
+   kubectl logs -n kube-system deployment/cluster-autoscaler
+   ```
+
+4. Watch nodes being added to your cluster:
+   ```bash
+   kubectl get nodes -w
    ```
 
 ## Customizing Your Setup
@@ -223,10 +216,27 @@ Available patterns:
              memory: "1Gi"
    ```
 
-   Setting these resource requirements ensures:
+3. Configure the cluster autoscaler:
+   ```bash
+   kubectl edit deployment -n kube-system cluster-autoscaler
+   ```
+
+   Modify the command arguments to change min/max nodes or other parameters:
+   ```yaml
+   command:
+     - ./cluster-autoscaler
+     - --v=4
+     - --stderrthreshold=info
+     - --cloud-provider=civo
+     - --nodes=3:10:workers  # Change min:max:pool-name as needed
+     - --scale-down-delay-after-add=10m  # Adjust scale-down delay
+   ```
+
+   Setting these configurations ensures:
    - Pods will remain unscheduled until sufficient resources are available
    - The Civo node autoscaler can trigger node creation before scheduling pods
    - Better resource allocation across your cluster
+   - Efficient scaling based on your workflow patterns
 
 ## Cleaning Up
 
@@ -253,10 +263,15 @@ If you encounter issues:
    kubectl logs -n actions-runner-system pod/github-runner-xxxxx
    ```
 
-3. Verify your GitHub Personal Access Token's scopes and expiration
-4. Ensure your Civo API key has sufficient permissions
-5. Make sure the Civo node autoscaler is properly installed and configured for your cluster. Without it, pods may remain in `Pending` state even with proper resource requirements.
-6. Refer to the [official ARC troubleshooting guide](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners-with-actions-runner-controller/troubleshooting-actions-runner-controller) for more detailed help
+3. Check cluster autoscaler logs:
+   ```bash
+   kubectl logs -n kube-system deployment/cluster-autoscaler
+   ```
+
+4. Verify your GitHub Personal Access Token's scopes and expiration
+5. Ensure your Civo API key has sufficient permissions
+6. Make sure the Civo node autoscaler is properly installed and configured for your cluster. Without it, pods may remain in `Pending` state even with proper resource requirements.
+7. Refer to the [official ARC troubleshooting guide](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners-with-actions-runner-controller/troubleshooting-actions-runner-controller) for more detailed help
 
 ## Why Civo K3s?
 
@@ -284,3 +299,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [Civo](https://www.civo.com) for providing the K3s platform
 - [Actions Runner Controller (ARC)](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners-with-actions-runner-controller/about-actions-runner-controller) - GitHub's official Kubernetes controller for self-hosted runners
 - [ARC GitHub Repository](https://github.com/actions/actions-runner-controller) for the open source project
+- [Kubernetes Cluster Autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler) project
+- [Civo Cluster Autoscaler](https://github.com/civo/cluster-autoscaler) for Civo integration

@@ -41,6 +41,5 @@ variable "cluster_websecure_access" {
 variable "github_token" {
   description = "GitHub Personal Access Token for Actions Runner Controller"
   type        = string
-  default     = ""
   sensitive   = true
 }
