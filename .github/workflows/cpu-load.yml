@@ -17,12 +17,23 @@ on:
         default: '80'
 
 jobs:
+  prepare-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        run: |
+          # Create array with indexes from 0 to concurrency-1
+          echo "matrix=[$(seq -s ',' 0 $((${{ github.event.inputs.concurrency }}-1)))]" >> $GITHUB_OUTPUT
+          
   cpu-load-test:
+    needs: prepare-matrix
     runs-on: [self-hosted, linux, x64]
     strategy:
       fail-fast: false
       matrix:
-        instance: ${{ toJSON(range(0, fromJSON(github.event.inputs.concurrency))) }}
+        instance: ${{ fromJSON(needs.prepare-matrix.outputs.matrix) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
