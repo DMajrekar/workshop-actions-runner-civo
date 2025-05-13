@@ -101,6 +101,8 @@ This workshop demonstrates how to set up, configure, and optimize GitHub Actions
    # ./scripts/trigger_single_job.sh janedoe my-workshop-repo
    ```
    
+   Note: This script always uses the "main" branch to trigger workflows.
+   
    This script will trigger a job that runs for 5 minutes using your self-hosted runner.
    - Alternatively, you can manually trigger the workflow from the GitHub UI:
      - Go to the Actions tab in your GitHub repository
@@ -117,7 +119,22 @@ This workshop demonstrates how to set up, configure, and optimize GitHub Actions
     # Navigate to your repository
     cd /projects/workshop
     # Run a pattern, e.g., sudden-burst
-    ./scripts/demo_patterns.sh sudden-burst your-username/your-repo
+    ./scripts/demo_patterns.sh sudden-burst your-username/your-repo main
+    ```
+    
+    The script parameters are:
+    ```
+    ./scripts/demo_patterns.sh <pattern> <repository> [branch]
+    ```
+    
+    Where:
+    - `<pattern>`: One of: sudden-burst, steady-increase, mixed-workload, scale-down-test
+    - `<repository>`: Your full repository path (username/repo-name)
+    - `[branch]`: Optional branch name, defaults to "main" if not specified
+    
+    Example:
+    ```bash
+    ./scripts/demo_patterns.sh sudden-burst janedoe/workshop-actions-runner main
     ```
     - Monitor the Kubernetes pods as they scale up:
     ```bash
