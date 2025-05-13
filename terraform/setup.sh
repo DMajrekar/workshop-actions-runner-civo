@@ -128,6 +128,13 @@ spec:
         - self-hosted
         - linux
         - x64
+      resources:
+        limits:
+          cpu: "1000m"
+          memory: "2Gi"
+        requests:
+          cpu: "500m"
+          memory: "1Gi"
 ---
 apiVersion: actions.summerwind.dev/v1alpha1
 kind: HorizontalRunnerAutoscaler
@@ -137,7 +144,7 @@ spec:
   scaleTargetRef:
     name: github-runner
   minReplicas: 1
-  maxReplicas: 10
+  maxReplicas: 20
   metrics:
   - type: TotalNumberOfQueuedAndInProgressWorkflowRuns
     scaleUpThreshold: '2'
