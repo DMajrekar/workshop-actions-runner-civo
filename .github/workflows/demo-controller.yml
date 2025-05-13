@@ -13,6 +13,10 @@ on:
           - mixed-workload
           - scale-down-test
 
+permissions:
+  actions: write
+  contents: read
+
 jobs:
   run-demo-pattern:
     runs-on: ubuntu-latest

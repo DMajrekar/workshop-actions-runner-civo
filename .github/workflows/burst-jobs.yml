@@ -12,6 +12,10 @@ on:
         required: true
         default: '2'
 
+permissions:
+  actions: write
+  contents: read
+
 jobs:
   queue-jobs:
     runs-on: ubuntu-latest
