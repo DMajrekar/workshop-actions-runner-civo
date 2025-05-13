@@ -10,8 +10,12 @@ cluster_name = "github-actions-runners"
 # Optional: Size of nodes (g4s.kube.small, g4s.kube.medium, g4s.kube.large)
 node_size = "g4s.kube.medium"
 
-# Optional: Number of nodes in the cluster
+# Optional: Initial number of nodes in the cluster
 node_count = 2
+
+# Optional: Autoscaling configuration
+min_node_count = 2
+max_node_count = 10
 
 # Optional: Applications to install from Civo marketplace
 # Comma-separated list of applications

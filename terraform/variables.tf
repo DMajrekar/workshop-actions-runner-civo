@@ -17,9 +17,21 @@ variable "node_size" {
 }
 
 variable "node_count" {
-  description = "Number of nodes in the cluster"
+  description = "Initial number of nodes in the cluster"
   type        = number
   default     = 2
+}
+
+variable "min_node_count" {
+  description = "Minimum number of nodes for autoscaling"
+  type        = number
+  default     = 2
+}
+
+variable "max_node_count" {
+  description = "Maximum number of nodes for autoscaling"
+  type        = number
+  default     = 10
 }
 
 variable "kubernetes_api_access" {

@@ -192,6 +192,7 @@ This workshop uses [Actions Runner Controller (ARC)](https://docs.github.com/en/
 ### Civo Cluster Autoscaler
 
 - Automatic scaling of Kubernetes nodes based on workload demand
+- Customizable scaling range (min and max nodes) via Terraform variables
 - Seamless integration with Civo's managed Kubernetes service
 - Integrated with Terraform for one-command deployment
 
