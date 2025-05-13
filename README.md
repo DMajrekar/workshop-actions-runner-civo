@@ -1,6 +1,6 @@
 # GitHub Actions Runners on Civo Kubernetes Workshop
 
-This workshop demonstrates how to set up, configure, and optimize GitHub Actions self-hosted runners on Civo's managed Kubernetes platform. It combines the power of kubernetes with the flexibility of GitHub Actions to create a scalable, cost-effective CI/CD infrastructure.
+This workshop demonstrates how to set up, configure, and optimize GitHub Actions self-hosted runners on Civo's managed Kubernetes platform using [Actions Runner Controller (ARC)](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners-with-actions-runner-controller/about-actions-runner-controller). It combines the power of kubernetes with the flexibility of GitHub Actions to create a scalable, cost-effective CI/CD infrastructure.
 
 ## Key Features
 
@@ -9,6 +9,31 @@ This workshop demonstrates how to set up, configure, and optimize GitHub Actions
 - **Cost Optimization**: Save 40-70% compared to GitHub-hosted runners with more control
 - **Multi-Project Support**: Configure runners for multiple repositories or organizations
 - **Real-world Testing**: Simulate various workflow patterns to demonstrate scaling
+
+## Technical Components
+
+### Actions Runner Controller (ARC)
+
+This workshop uses [Actions Runner Controller (ARC)](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners-with-actions-runner-controller/about-actions-runner-controller), GitHub's official Kubernetes-based controller for managing self-hosted runners. Key ARC features include:
+
+- Automatic scaling of runners based on workflow demands
+- Management of runner lifecycles
+- Support for both repository and organization-level runners
+- Kubernetes-native management with custom resources
+
+For more details on ARC concepts and components, refer to the [official documentation](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners-with-actions-runner-controller/about-actions-runner-controller).
+
+### Civo Kubernetes
+
+- Lightweight K3s cluster with fast provisioning (under 90 seconds)
+- Free control plane with cost-effective worker nodes
+- No data transfer costs, unlike other cloud providers
+
+### Terraform Automation
+
+- One-command cluster provisioning with proper security
+- Consistent, reproducible infrastructure
+- Easy cleanup to prevent lingering costs
 
 ## Repository Structure
 
@@ -177,6 +202,7 @@ If you encounter issues:
 
 3. Verify your GitHub Personal Access Token's scopes and expiration
 4. Ensure your Civo API key has sufficient permissions
+5. Refer to the [official ARC troubleshooting guide](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners-with-actions-runner-controller/troubleshooting-actions-runner-controller) for more detailed help
 
 ## Why Civo K3s?
 
@@ -202,4 +228,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Acknowledgements
 
 - [Civo](https://www.civo.com) for providing the K3s platform
-- [Actions Runner Controller](https://github.com/actions-runner-controller/actions-runner-controller) project
+- [Actions Runner Controller (ARC)](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners-with-actions-runner-controller/about-actions-runner-controller) - GitHub's official Kubernetes controller for self-hosted runners
+- [ARC GitHub Repository](https://github.com/actions/actions-runner-controller) for the open source project

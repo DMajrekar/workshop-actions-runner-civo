@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        instance: ${{ fromJson(format('[{0}]', join(',',[for i in range(fromJSON(github.event.inputs.concurrency)): format('{{"id":"{0}"}}', i)]))) }}
+        instance: ${{ fromJSON('[' + join(',', range(fromJSON(github.event.inputs.concurrency))) + ']') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3

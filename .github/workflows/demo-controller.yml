@@ -20,14 +20,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Generate tokens
-        id: generate_token
-        uses: tibdex/github-app-token@v1
-        with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+      # Using PAT authentication instead of GitHub App
         
       - name: Run demo pattern
         run: bash ./scripts/demo_patterns.sh ${{ github.event.inputs.pattern }} ${{ github.repository }}
         env:
-          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
