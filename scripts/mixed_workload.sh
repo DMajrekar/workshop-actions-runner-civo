@@ -4,6 +4,19 @@
 workload_type=$1
 duration_mins=$2
 
+# Ensure bc is installed
+if ! command -v bc &> /dev/null; then
+  echo "Installing bc..."
+  if command -v apt-get &> /dev/null; then
+    sudo apt-get update -qq && sudo apt-get install -y bc
+  elif command -v yum &> /dev/null; then
+    sudo yum install -y bc
+  else
+    echo "Cannot install bc, using default duration without randomization"
+    actual_duration=$duration_mins
+  fi
+fi
+
 # Add randomness to duration (±20%)
 random_factor=$(echo "scale=2; (0.8 + (0.4 * $RANDOM / 32767))" | bc)
 actual_duration=$(echo "$duration_mins * $random_factor" | bc)
@@ -52,7 +65,13 @@ run_cpu_workload() {
   echo "Running CPU-heavy workload for $duration seconds"
   
   if command -v stress-ng &> /dev/null; then
-    timeout ${duration}s stress-ng --cpu 2 --cpu-method matrixprod --timeout ${duration}s
+    timeout ${duration}s stress-ng --cpu 2 --cpu-method matrixprod --timeout ${duration}s || code=$?
+    # Treat timeout exit code 124 as success
+    if [ "${code:-0}" -eq 124 ]; then
+      echo "CPU workload completed successfully after timeout"
+    elif [ "${code:-0}" -ne 0 ]; then
+      echo "CPU workload exited with code: ${code:-0}"
+    fi
   else
     # Fallback to basic CPU load
     end_time=$(($(date +%s) + duration))
@@ -69,7 +88,13 @@ run_memory_workload() {
   echo "Running memory-heavy workload for $duration seconds"
   
   if command -v stress-ng &> /dev/null; then
-    timeout ${duration}s stress-ng --vm 2 --vm-bytes 75% --timeout ${duration}s
+    timeout ${duration}s stress-ng --vm 2 --vm-bytes 75% --timeout ${duration}s || code=$?
+    # Treat timeout exit code 124 as success
+    if [ "${code:-0}" -eq 124 ]; then
+      echo "Memory workload completed successfully after timeout"
+    elif [ "${code:-0}" -ne 0 ]; then
+      echo "Memory workload exited with code: ${code:-0}"
+    fi
   else
     # Fallback to basic memory usage
     end_time=$(($(date +%s) + duration))
@@ -92,7 +117,13 @@ run_io_workload() {
     # Create temporary file for IO operations
     TEMPFILE=$(mktemp)
     
-    timeout ${duration}s fio --name=random-write --ioengine=posixaio --rw=randwrite --bs=4k --size=100m --numjobs=4 --runtime=${duration} --filename=${TEMPFILE}
+    timeout ${duration}s fio --name=random-write --ioengine=posixaio --rw=randwrite --bs=4k --size=100m --numjobs=4 --runtime=${duration} --filename=${TEMPFILE} || code=$?
+    # Treat timeout exit code 124 as success
+    if [ "${code:-0}" -eq 124 ]; then
+      echo "IO workload completed successfully after timeout"
+    elif [ "${code:-0}" -ne 0 ]; then
+      echo "IO workload exited with code: ${code:-0}"
+    fi
     
     # Clean up
     rm -f ${TEMPFILE}

@@ -20,6 +20,12 @@ jobs:
           
       - name: Queue jobs
         run: |
+          # Ensure bc is installed
+          if ! command -v bc &> /dev/null; then
+            echo "Installing bc..."
+            sudo apt-get update -qq && sudo apt-get install -y bc
+          fi
+          
           echo "Scheduling ${{ github.event.inputs.job_count }} jobs..."
           
           for i in $(seq 1 ${{ github.event.inputs.job_count }}); do

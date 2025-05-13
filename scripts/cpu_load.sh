@@ -5,6 +5,20 @@
 duration_mins=$1
 cpu_percentage=$2
 
+# Ensure bc is installed
+if ! command -v bc &> /dev/null; then
+  echo "Installing bc..."
+  if command -v apt-get &> /dev/null; then
+    sudo apt-get update -qq && sudo apt-get install -y bc
+  elif command -v yum &> /dev/null; then
+    sudo yum install -y bc
+  else
+    echo "Cannot install bc, using default duration without randomization"
+    actual_duration=$duration_mins
+    variation=0
+  fi
+fi
+
 # Add some randomness to duration (±20%)
 variation=$(echo "scale=2; $duration_mins * 0.4 * $(echo "scale=4; $RANDOM/32767" | bc)" | bc)
 if [ $((RANDOM % 2)) -eq 0 ]; then
