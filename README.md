@@ -2,38 +2,7 @@
 
 This workshop demonstrates how to set up, configure, and optimize GitHub Actions self-hosted runners on Civo's managed Kubernetes platform using [Actions Runner Controller (ARC)](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners-with-actions-runner-controller/about-actions-runner-controller). It combines the power of Kubernetes with the flexibility of GitHub Actions to create a scalable, cost-effective CI/CD infrastructure.
 
-## Workshop Flow
-
-### Intro
-- **What is Civo**
-  - Managed Kubernetes provider focused on simplicity and speed
-  - Fast cluster deployment in under 90 seconds
-  - No control plane charges and competitive node pricing
-  - Free data transfer with no egress charges
-
-- **What are GitHub Actions**
-  - CI/CD platform integrated with GitHub repositories
-  - Automate build, test, and deployment workflows
-  - Event-driven execution (push, PR, schedule, manual)
-  
-- **What can GitHub Actions be used for?**
-  - Continuous Integration/Continuous Deployment
-  - Code testing and quality checks
-  - Container image building and publishing
-  - Infrastructure provisioning and management
-  - Release automation
-
-- **How GitHub Actions work out of the box**
-  - GitHub-hosted runners (Windows, Linux, macOS)
-  - Built-in actions and marketplace integrations
-  - YAML-based workflow configuration
-  
-- **Custom Runners**
-  - Self-hosted option for specific requirements
-  - Control over environment and hardware
-  - Cost optimization and security benefits
-
-### Workshop Hands-On
+## Workshop Hands-On
 
 1. **Sign up for a Civo Account**
    - Create an account at [civo.com](https://www.civo.com)
@@ -148,15 +117,6 @@ This workshop demonstrates how to set up, configure, and optimize GitHub Actions
     ```bash
     kubectl get nodes -w
     ```
-
-### Conclusion
-
-- **Benefits of Self-Hosted Runners on Civo**
-  - **Privacy**: Runners operate within your own infrastructure
-  - **Cost Savings**: Save 40-70% compared to GitHub-hosted runners
-  - **Control**: Custom environment, tools, and resource allocation
-  - **Performance**: Faster builds with optimized hardware configurations
-  - **Scalability**: Handle peak loads without maintaining idle capacity
 
 ## Technical Components
 
