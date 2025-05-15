@@ -30,3 +30,5 @@ cluster_websecure_access = ["0.0.0.0/0"]
 # This will be collected by the setup.sh script interactively
 # You can also set it manually here if preferred
 # github_token = "your-github-personal-access-token"
+# github_username = "your-github-username"
+# github_repo = "your-repository-name"

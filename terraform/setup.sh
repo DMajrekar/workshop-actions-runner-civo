@@ -51,12 +51,61 @@ fi
 # Collect all required inputs at the beginning
 echo "Collecting all required inputs..."
 
+# Get GitHub repository information first
+echo
+if grep -q "github_username" terraform.tfvars && grep -q "github_repo" terraform.tfvars; then
+    # Extract values from terraform.tfvars
+    github_username=$(grep "github_username" terraform.tfvars | cut -d'"' -f2)
+    github_repo=$(grep "github_repo" terraform.tfvars | cut -d'"' -f2)
+    echo "Using existing GitHub repository: $github_username/$github_repo"
+else
+    read -p "Enter your GitHub username: " github_username
+    read -p "Enter the repository name: " github_repo
+    
+    # Save repository info to terraform.tfvars
+    echo "" >> terraform.tfvars
+    echo "# GitHub Username and Repository" >> terraform.tfvars
+    echo "github_username = \"$github_username\"" >> terraform.tfvars
+    echo "github_repo = \"$github_repo\"" >> terraform.tfvars
+fi
+
 # Check if GitHub token already exists in tfvars file
 if grep -q "github_token" terraform.tfvars; then
     echo "GitHub token already exists in terraform.tfvars. It will be used for deployment."
     # Extract the token from terraform.tfvars
     github_token=$(grep "github_token" terraform.tfvars | cut -d'"' -f2)
     echo "Using existing GitHub token..."
+    
+    # Validate the existing token against GitHub API
+    echo "Validating the GitHub PAT..."
+    repo_access_check=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token $github_token" "https://api.github.com/repos/$github_username/$github_repo")
+
+    if [ "$repo_access_check" != "200" ]; then
+        echo "Error: The GitHub PAT in terraform.tfvars cannot access the repository $github_username/$github_repo."
+        echo "HTTP response code: $repo_access_check"
+        echo "Please enter a new token with the correct 'repo' scope."
+        read -p "Enter your GitHub Personal Access Token: " github_token
+        
+        # Update the token in terraform.tfvars
+        sed -i "s/github_token = \".*\"/github_token = \"$github_token\"/g" terraform.tfvars
+        echo "GitHub token updated in terraform.tfvars"
+    else
+        # Check for repo scope
+        scopes_check=$(curl -s -I -H "Authorization: token $github_token" "https://api.github.com/repos/$github_username/$github_repo" | grep -i "x-oauth-scopes:" | tr -d '\r')
+
+        if [[ ! "$scopes_check" =~ "repo" ]]; then
+            echo "Error: The GitHub PAT in terraform.tfvars does not have the required 'repo' scope."
+            echo "Current scopes: $scopes_check"
+            echo "Please enter a new token with the 'repo' scope enabled."
+            read -p "Enter your GitHub Personal Access Token: " github_token
+            
+            # Update the token in terraform.tfvars
+            sed -i "s/github_token = \".*\"/github_token = \"$github_token\"/g" terraform.tfvars
+            echo "GitHub token updated in terraform.tfvars"
+        else
+            echo "GitHub PAT validation successful! The token has the required access and scopes."
+        fi
+    fi
 else
     # Get GitHub PAT information
     echo
@@ -80,20 +129,40 @@ else
     fi
 
     # Get GitHub PAT information
-    echo
-    read -p "Enter your GitHub Personal Access Token: " github_token
+echo
+read -p "Enter your GitHub Personal Access Token: " github_token
 
-    # Save the token to terraform.tfvars for future use
-    echo "" >> terraform.tfvars
-    echo "# GitHub Personal Access Token" >> terraform.tfvars
-    echo "github_token = \"$github_token\"" >> terraform.tfvars
-    echo "GitHub token saved to terraform.tfvars"
+# Validate the PAT against GitHub API
+echo "Validating the GitHub PAT..."
+repo_access_check=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token $github_token" "https://api.github.com/repos/$github_username/$github_repo")
+
+if [ "$repo_access_check" != "200" ]; then
+    echo "Error: The GitHub PAT provided cannot access the repository $github_username/$github_repo."
+    echo "HTTP response code: $repo_access_check"
+    echo "Please check that the token is valid and has the correct 'repo' scope."
+    exit 1
 fi
 
-# Get GitHub repository information at the beginning
-echo
-read -p "Enter your GitHub username: " github_username
-read -p "Enter the repository name: " github_repo
+# Check for repo scope specifically
+scopes_check=$(curl -s -I -H "Authorization: token $github_token" "https://api.github.com/repos/$github_username/$github_repo" | grep -i "x-oauth-scopes:" | tr -d '\r')
+
+if [[ ! "$scopes_check" =~ "repo" ]]; then
+    echo "Error: The GitHub PAT does not have the required 'repo' scope."
+    echo "Current scopes: $scopes_check"
+    echo "Please create a new token with the 'repo' scope enabled."
+    exit 1
+fi
+
+echo "GitHub PAT validation successful! The token has the required access and scopes."
+
+# Save the token to terraform.tfvars for future use
+echo "" >> terraform.tfvars
+echo "# GitHub Personal Access Token" >> terraform.tfvars
+echo "github_token = \"$github_token\"" >> terraform.tfvars
+echo "GitHub token saved to terraform.tfvars"
+fi
+
+# GitHub repository info already collected above
 
 # Initialize Terraform
 echo "Initializing Terraform..."
@@ -103,8 +172,7 @@ terraform init
 echo
 echo "Creating Civo Kubernetes cluster with Actions Runner Controller and Cluster Autoscaler..."
 echo "This will take a few minutes..."
-terraform apply -auto-approve \
-  -var="github_token=$github_token"
+terraform apply -auto-approve
 
 # Get kubeconfig and setup kubectl
 echo
@@ -117,11 +185,16 @@ echo
 echo "Verifying connection to the cluster..."
 kubectl cluster-info
 
-# Setup repository runner deployment
-echo
-echo "Using GitHub repository: $github_username/$github_repo"
+# Setup repository runner deployment - only if not using Terraform to create it
+if ! grep -q "github_username" terraform.tfvars || ! grep -q "github_repo" terraform.tfvars; then
+    echo
+    echo "Repository information not found in terraform.tfvars. Creating runner deployment manually."
+    echo "Using GitHub repository: $github_username/$github_repo"
 
-cat > runner-deployment.yaml << EOF
+    # Make sure to use the values from script variables
+    repository_path="$github_username/$github_repo"
+
+    cat > runner-deployment.yaml << EOF
 apiVersion: actions.summerwind.dev/v1alpha1
 kind: RunnerDeployment
 metadata:
@@ -130,7 +203,7 @@ spec:
   replicas: 1
   template:
     spec:
-      repository: $github_username/$github_repo
+      repository: $repository_path
       labels:
         - self-hosted
         - linux
@@ -160,10 +233,14 @@ spec:
     scaleDownFactor: '0.5'
 EOF
 
-# Deploy runner configuration
-echo
-echo "Deploying runner configuration..."
-kubectl apply -f runner-deployment.yaml
+    # Deploy runner configuration manually with kubectl
+    echo
+    echo "Deploying runner configuration with kubectl..."
+    kubectl apply -f runner-deployment.yaml
+else
+    echo
+    echo "Using Terraform to deploy runner configuration for repository: $github_username/$github_repo"
+fi
 
 # Final instructions
 echo
