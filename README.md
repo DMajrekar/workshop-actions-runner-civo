@@ -15,7 +15,8 @@ This workshop demonstrates how to set up, configure, and optimize GitHub Actions
 
 3. **Civo CLI Setup with API Key**
    ```bash
-   civo apikey add default YOUR_API_KEY
+   civo apikey add 
+   civo apikey use <API KEY NAME>
    ```
    - Run a list regions command to verify
    ```bash
