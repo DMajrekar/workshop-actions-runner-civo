@@ -118,6 +118,135 @@ This workshop demonstrates how to set up, configure, and optimize GitHub Actions
     kubectl get nodes -w
     ```
 
+## Frequently Asked Questions (FAQs)
+
+The following questions were collected after running the workshop and reflect common scenarios for production deployments:
+
+### Can this be used for multiple repositories?
+**Yes**. To support multiple repositories, you can add more runner deployments. In the `terraform/arc.tf` file, you would create additional `kubernetes_manifest.runner_deployment` resources, each pointing to a different repository. Each deployment can have its own autoscaling settings.
+
+Example configuration for supporting multiple repositories:
+```hcl
+# Runner deployment for repo 1
+resource "kubernetes_manifest" "runner_deployment_repo1" {
+  manifest = {
+    apiVersion = "actions.summerwind.dev/v1alpha1"
+    kind       = "RunnerDeployment"
+    metadata = {
+      name      = "github-runner-repo1"
+      namespace = kubernetes_namespace.actions_runner_system.metadata[0].name
+    }
+    spec = {
+      replicas = 1
+      template = {
+        spec = {
+          repository = "username/repo1"
+          labels     = ["self-hosted", "linux", "x64", "repo1"]
+          # Resource configuration
+        }
+      }
+    }
+  }
+}
+
+# Runner deployment for repo 2
+resource "kubernetes_manifest" "runner_deployment_repo2" {
+  manifest = {
+    apiVersion = "actions.summerwind.dev/v1alpha1"
+    kind       = "RunnerDeployment"
+    metadata = {
+      name      = "github-runner-repo2"
+      namespace = kubernetes_namespace.actions_runner_system.metadata[0].name
+    }
+    spec = {
+      replicas = 1
+      template = {
+        spec = {
+          repository = "username/repo2"
+          labels     = ["self-hosted", "linux", "x64", "repo2"]
+          # Resource configuration
+        }
+      }
+    }
+  }
+}
+```
+
+### Can the scaling limits for nodes and runner pods be changed?
+**Yes**. You can adjust both the Kubernetes cluster node scaling and the runner pod scaling:
+
+1. For node scaling limits:
+   - Edit the `min_node_count` and `max_node_count` variables in `terraform/variables.tf` or override them in `terraform.tfvars`.
+   - Current defaults: `min_node_count = 2` and `max_node_count = 10`.
+
+2. For runner pod scaling:
+   - Edit the `minReplicas` and `maxReplicas` values in the `kubernetes_manifest.runner_autoscaler` resource in `terraform/arc.tf`.
+   - Current defaults: `minReplicas = 1` and `maxReplicas = 20`.
+
+You can also adjust the scaling factors and thresholds in the autoscaler configuration to fine-tune when and how aggressively the system scales.
+
+### Can this be used for organization-wide deployments?
+**Yes**. Actions Runner Controller (ARC) supports both repository-level and organization-level runners. 
+
+To configure an org-level deployment, modify the runner deployment spec in `terraform/arc.tf` to use `organization` instead of `repository`:
+
+```hcl
+resource "kubernetes_manifest" "runner_deployment" {
+  manifest = {
+    apiVersion = "actions.summerwind.dev/v1alpha1"
+    kind       = "RunnerDeployment"
+    metadata = {
+      name      = "github-org-runner"
+      namespace = kubernetes_namespace.actions_runner_system.metadata[0].name
+    }
+    spec = {
+      replicas = 1
+      template = {
+        spec = {
+          organization = "your-org-name"  # Instead of repository
+          labels       = ["self-hosted", "linux", "x64"]
+          # Resource configuration
+        }
+      }
+    }
+  }
+}
+```
+
+For more detailed configuration options for organization-level deployments, please refer to the [upstream documentation](https://github.com/actions/actions-runner-controller/blob/master/docs/detailed-docs.md#runner-deployment-with-organization-wide-runners) on the ARC Helm chart.
+
+### Can we tag specific jobs to specific runners (e.g., staging/test/prod)?
+**Yes**. You can define custom labels for your runners and then target those specific runners in your GitHub Actions workflows.
+
+1. In your runner deployment configuration (`terraform/arc.tf`), add custom labels to the runner:
+   ```hcl
+   resource "kubernetes_manifest" "runner_deployment" {
+     manifest = {
+       # ...
+       spec = {
+         # ...
+         template = {
+           spec = {
+             # ...
+             labels = ["self-hosted", "linux", "x64", "staging"]  # Add custom label
+           }
+         }
+       }
+     }
+   }
+   ```
+
+2. In your GitHub Actions workflow YAML files, use the `runs-on` attribute to target runners with specific labels:
+   ```yaml
+   jobs:
+     deployment:
+       runs-on: ["self-hosted", "staging"]  # Will run only on runners with both labels
+       steps:
+         # Job steps
+   ```
+
+Using this approach, you can create separate runner deployments for different environments (staging, test, prod) and target them specifically in your workflows.
+
 ## Technical Components
 
 ### Kubernetes Metrics Server
